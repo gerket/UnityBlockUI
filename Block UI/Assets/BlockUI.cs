@@ -5,7 +5,8 @@ using TMPro;
 
 public class BlockUI : MonoBehaviour {
 
-    public float distanceBetweenCards;
+    public float distanceBetweenBlocks;
+    public float fallTime;
     public GameObject blockPrefab;
     public TextMeshPro blockTextFront;
     public TextMeshPro blockTextTop;
@@ -18,10 +19,12 @@ public class BlockUI : MonoBehaviour {
     public Transform initial2Transform;
     public Transform initial3Transform;
     public GameObject blockOK;
+    public Transform blockOKTransform;
     public GameObject canvas;
 
 
     public List<GameObject> blocks;
+    public Transform currBlockTransform;
     public List<GameObject> initials;
     public List<string> initialsText;
     public GameObject blockToAdd;
@@ -29,9 +32,10 @@ public class BlockUI : MonoBehaviour {
     public TextMeshPro[] blockTexts;
     public Color32[] colors;
     public int colorCounter;
-    public int initialCounter;
+    //public int initialCounter;
     public GameObject spawnInitial;
     public GameObject initialBlockToInstantiate;
+    public GameObject toDestroy;
      
 
 
@@ -45,11 +49,20 @@ public class BlockUI : MonoBehaviour {
         blockTexts = new TextMeshPro[] { blockTextFront, blockTextTop, blockTextLeft, blockTextRight };
         colors = new Color32[] {Color.red, Color.blue, Color.green, Color.yellow, Color.magenta };
         colorCounter = 0;
-        initialCounter = 1;
+        //initialCounter = 1;
 
         spawnBlocks();
         StartCoroutine("positionBlocks");
 
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown("backspace"))
+        {
+            Debug.Log("backspace pressed");
+            deleteInitial();
+        }
     }
 
     void spawnBlocks()
@@ -77,15 +90,18 @@ public class BlockUI : MonoBehaviour {
     IEnumerator positionBlocks()
     {
 
-        offset = ((blocks.Count - 1.0f) * controller.distanceBetweenCards / 2.0f) - blockTransform.position.x;
+        offset = ((blocks.Count - 1.0f) * controller.distanceBetweenBlocks / 2.0f) - blockTransform.position.x;
         offset *= -1.0f;
 
         for (int i = 0; i < blocks.Count; i++)
         {
-            blocks[i].transform.position = new Vector3(offset + (i * controller.distanceBetweenCards),initialHeight, blockTransform.position.z);
+            blocks[i].transform.position = new Vector3(offset + (i * controller.distanceBetweenBlocks),initialHeight, blockTransform.position.z);
+            blocks[i].SetActive(true);
             blocks[i].GetComponent<BoxCollider>().enabled = true;
-            blocks[i].GetComponent<Rigidbody>().useGravity = true;
+            currBlockTransform = blocks[i].transform;
+            //blocks[i].GetComponent<Rigidbody>().useGravity = true;
             blocks[i].GetComponent<AudioSource>().enabled = true;
+            LeanTween.move(blocks[i], new Vector3(currBlockTransform.position.x, 0.51f, currBlockTransform.position.z), fallTime);
             yield return new WaitForSeconds(timeBetweenDrops);
         }
     }
@@ -104,7 +120,10 @@ public class BlockUI : MonoBehaviour {
         {
             case 0:
                 spawnInitial = GameObject.Instantiate(initialBlockToInstantiate, initial1Transform.position, initial1Transform.rotation);
-                spawnInitial.name = "Initial 1: " + spawnInitial.name;
+                spawnInitial.name = "Initial 1: " + initialBlockToInstantiate.name;
+                spawnInitial.GetComponent<blockScript>().enabled = false;
+                spawnInitial.GetComponent<initialsScript>().enabled = true;
+                spawnInitial.GetComponent<Rigidbody>().useGravity = true;
                 initialsText.Add(initialBlockToInstantiate.name);
                 initials.Add(spawnInitial);
                 Debug.Log("case 1");
@@ -112,7 +131,10 @@ public class BlockUI : MonoBehaviour {
 
             case 1:
                 spawnInitial = GameObject.Instantiate(initialBlockToInstantiate, initial2Transform.position, initial2Transform.rotation);
-                spawnInitial.name = "Initial 2: " + spawnInitial.name;
+                spawnInitial.name = "Initial 2: " + initialBlockToInstantiate.name;
+                spawnInitial.GetComponent<blockScript>().enabled = false;
+                spawnInitial.GetComponent<initialsScript>().enabled = true;
+                spawnInitial.GetComponent<Rigidbody>().useGravity = true;
                 initialsText.Add(initialBlockToInstantiate.name);
                 initials.Add(spawnInitial);
                 Debug.Log("case 2");
@@ -120,10 +142,15 @@ public class BlockUI : MonoBehaviour {
 
             case 2:
                 spawnInitial = GameObject.Instantiate(initialBlockToInstantiate, initial3Transform.position, initial3Transform.rotation);
-                spawnInitial.name = "Initial 3: " + spawnInitial.name;
+                spawnInitial.name = "Initial 3: " + initialBlockToInstantiate.name;
+                spawnInitial.GetComponent<blockScript>().enabled = false;
+                spawnInitial.GetComponent<initialsScript>().enabled = true;
+                spawnInitial.GetComponent<Rigidbody>().useGravity = true;
                 initialsText.Add(initialBlockToInstantiate.name);
                 initials.Add(spawnInitial);
                 yield return new WaitForSeconds(timeBetweenDrops);
+                blockOK.GetComponent<Transform>().position = blockOKTransform.position;
+                blockOK.SetActive(true);
                 blockOK.GetComponent<Rigidbody>().useGravity = true;
                 Debug.Log("case 3");
                 break;
@@ -137,20 +164,40 @@ public class BlockUI : MonoBehaviour {
         yield break;
     }
 
-    public void deleteInitials()
+    public void deleteInitial()
     {
+        Debug.Log("Delete Initial called");
         switch (initials.Count)
         {
             case 3:
+
+
                 //kick ok block and initial 3, remove initial 3 from initials and initialsText
+                blockOK.GetComponent<Rigidbody>().useGravity = false;
+                blockOK.transform.position = blockOKTransform.position;
+                toDestroy = initials[2];
+                initials.RemoveAt(2);
+                Destroy(toDestroy);
+                initialsText.RemoveAt(2);
                 break;
 
             case 2:
+
+
                 //kick initial 2, remove initial 3 from initials and initialsText
+                toDestroy = initials[1];
+                initials.RemoveAt(1);
+                Destroy(toDestroy);
+                initialsText.RemoveAt(1);
                 break;
 
             case 1:
 
+
+                toDestroy = initials[0];
+                initials.Remove(toDestroy);
+                Destroy(toDestroy);
+                initialsText.RemoveAt(0);
                 break;
 
             default:
@@ -162,5 +209,10 @@ public class BlockUI : MonoBehaviour {
     public void fadeOut()
     {
         LeanTween.alpha(canvas, 0.0f, 1.0f);
+    }
+
+    public void fadeIn()
+    {
+        LeanTween.alpha(canvas, 255.0f, 1.0f);
     }
 }

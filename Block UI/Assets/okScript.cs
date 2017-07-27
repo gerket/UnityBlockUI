@@ -14,14 +14,24 @@ public class okScript : MonoBehaviour
     void Start()
     {
         GetComponent<AudioSource>().clip = collisionSound;
-        GetComponent<TextMeshPro>().color = Color.green;
+        GetComponent<AudioSource>().enabled = true;
+        for (int i = 0; i < 4; i++)
+        {
+            gameObject.transform.GetChild(i).transform.GetComponent<TextMeshPro>().color = Color.green;
+        }
+        
     }
 
-    void OnMouseDown()
+    IEnumerator OnMouseDown()
     {
-        Debug.Log(controller.initialsText);
+        for(int i = 0; i < 3; i++)
+        {
+            Debug.Log(controller.initialsText[i].ToString());
+        }
 
-        controller.fadeOut();
+        //controller.fadeOut();
+        yield return new WaitForSeconds(1);
+        //controller.fadeIn();
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }

@@ -16,7 +16,9 @@ public class initialsScript : MonoBehaviour
 
     void OnMouseDown()
     {
-        controller.deleteInitials();
+        if (enabled) {
+            controller.deleteInitial();
+        }
     }
 
     void OnCollisionEnter()
